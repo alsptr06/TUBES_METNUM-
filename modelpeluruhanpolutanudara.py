@@ -18,7 +18,7 @@ class ModelKualitasUdara:
         df_co = df_co.iloc[:, [6, 3]].copy()
         df_co.columns = ['Waktu', 'CO']
         
-        df_o3 = df_o3.iloc[:, [6, 3]].copy()
+        df_o3 = df_o3.iloc[:, [6, 3]].copy()  
         df_o3.columns = ['Waktu', 'O3']
         # -----------------------------
         
@@ -112,41 +112,71 @@ class ModelKualitasUdara:
 # EKSEKUSI PROGRAM
 # ==========================================
 if __name__ == "__main__":
-    # 1. Tentukan letak file dataset India
-    file_excel = "data set india.xlsx"
 
-    print("Sedang membaca file Excel... (Ini mungkin memakan waktu beberapa detik)")
-    df_pm25 = pd.read_excel(file_excel, sheet_name='pm25', header=None)
-    df_co = pd.read_excel(file_excel, sheet_name='co', header=None)
-    df_o3 = pd.read_excel(file_excel, sheet_name='o3', header=None)    
-    
-    # 2. Inisiasi Objek Model
+    print("Sedang membaca file Excel...")
+
+    # Path file Excel
+    path_file = r"C:\Users\User\OneDrive\Documents\KULIAH\semester 4\METNUM\TUBES\data set india.xlsx"
+
+    # Membaca masing-masing sheet
+    df_pm25 = pd.read_excel(path_file, sheet_name='pm25', header=None)
+    df_co   = pd.read_excel(path_file, sheet_name='co', header=None)
+    df_o3   = pd.read_excel(path_file, sheet_name='o3', header=None)
+
+    # Membuat objek model
     model = ModelKualitasUdara(df_pm25, df_co, df_o3)
-    
-    # Menampilkan cuplikan data gabungan untuk memastikan datanya rapi
+
+    # Menampilkan beberapa data hasil penggabungan
     print("\n--- Cuplikan Data Tergabung ---")
     print(model.df.head())
-    
-    # 3. Parameter Teoritis (Bisa Dikalibrasi Nanti)
+
+    # Parameter model
     E_estimasi = 25.0
     k_estimasi = 0.6
-    
-    # 4. Pemanggilan Metode Komputasi
-    hasil_simulasi_rk4 = model.hitung_runge_kutta(E=E_estimasi, k=k_estimasi)
-    idx_anomali, array_laju = model.deteksi_anomali(ambang_batas=30.0)
-    
-    # 5. Visualisasi 
+
+    # Simulasi RK4
+    hasil_simulasi_rk4 = model.hitung_runge_kutta(
+        E=E_estimasi,
+        k=k_estimasi
+    )
+
+    # Deteksi anomali
+    idx_anomali, array_laju = model.deteksi_anomali(
+        ambang_batas=30.0
+    )
+
+    # Visualisasi
     plt.figure(figsize=(12, 6))
-    plt.plot(model.waktu, model.P_aktual, label='Data PM2.5 Aktual (India)', color='blue', alpha=0.6)
-    plt.plot(model.waktu, hasil_simulasi_rk4, label=f'Simulasi RK4 (E={E_estimasi}, k={k_estimasi})', color='red', linestyle='dashed')
-    
-    # Pastikan ada data anomali sebelum menggambar scatter plot
+
+    plt.plot(
+        model.waktu,
+        model.P_aktual,
+        color='blue',
+        alpha=0.6,
+        label='Data PM2.5 Aktual'
+    )
+
+    plt.plot(
+        model.waktu,
+        hasil_simulasi_rk4,
+        color='red',
+        linestyle='dashed',
+        label=f'Simulasi RK4 (E={E_estimasi}, k={k_estimasi})'
+    )
+
     if len(idx_anomali) > 0:
-        plt.scatter(model.waktu.iloc[idx_anomali], model.P_aktual[idx_anomali], color='orange', s=50, zorder=5, label='Titik Krisis (Anomali)')
-        
+        plt.scatter(
+            model.waktu.iloc[idx_anomali],
+            model.P_aktual[idx_anomali],
+            color='orange',
+            s=50,
+            zorder=5,
+            label='Titik Anomali'
+        )
+
     plt.title('Simulasi Kualitas Udara & Deteksi Anomali')
     plt.xlabel('Waktu')
-    plt.ylabel('Konsentrasi (µg/m³)')
+    plt.ylabel('Konsentrasi PM2.5 (µg/m³)')
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
